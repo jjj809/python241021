@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>테트리스 게임</title>
+    <style>
+        #game-board {
+            width: 300px;
+            height: 600px;
+            background-color: #f0f0f0;
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(20, 1fr);
+            gap: 1px;
+            border: 2px solid #333;
+        }
+
+        .tetromino {
+            border: 1px solid #000;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-board"></div>
+
+    <script>
+        const BOARD_WIDTH = 10;
+        const BOARD_HEIGHT = 20;
+        const board = [];
+
+        // 게임 보드 초기화
+        for (let row = 0; row < BOARD_HEIGHT; row++) {
+            board[row] = [];
+            for (let col = 0; col < BOARD_WIDTH; col++) {
+                board[row][col] = 0;
+            }
+        }
+
+        // 테트로미노 모양 정의
+        const SHAPES = [
+            [[1, 1, 1, 1]],
+            [[1, 1], [1, 1]],
+            [[1, 1, 1], [0, 1, 0]],
+            [[1, 1, 1], [1, 0, 0]],
+            [[1, 1, 1], [0, 0, 1]],
+            [[1, 1, 0], [0, 1, 1]],
+            [[0, 1, 1], [1, 1, 0]]
+        ];
+
+        let currentShape;
+        let currentX;
+        let currentY;
+
+        function newShape() {
+            currentShape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+            currentX = Math.floor(BOARD_WIDTH / 2) - Math.floor(currentShape[0].length / 2);
+            currentY = 0;
+        }
+
+        function draw() {
+            const gameBoard = document.getElementById('game-board');
+            gameBoard.innerHTML = '';
+            
+            for (let row = 0; row < BOARD_HEIGHT; row++) {
+                for (let col = 0; col < BOARD_WIDTH; col++) {
+                    if (board[row][col] || (currentShape && row >= currentY && row < currentY + currentShape.length && col >= currentX && col < currentX + currentShape[0].length && currentShape[row - currentY][col - currentX])) {
+                        const cell = document.createElement('div');
+                        cell.classList.add('tetromino');
+                        cell.style.backgroundColor = 'blue';
+                        gameBoard.appendChild(cell);
+                    } else {
+                        const cell = document.createElement('div');
+                        gameBoard.appendChild(cell);
+                    }
+                }
+            }
+        }
+
+        function moveDown() {
+            currentY++;
+            if (collision()) {
+                currentY--;
+                merge();
+                newShape();
+            }
+            draw();
+        }
+
+        function collision() {
+            for (let row = 0; row < currentShape.length; row++) {
+                for (let col = 0; col < currentShape[row].length; col++) {
+                    if (currentShape[row][col] && (currentY + row >= BOARD_HEIGHT || currentX + col < 0 || currentX + col >= BOARD_WIDTH || board[currentY + row][currentX + col])) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        function merge() {
+            for (let row = 0; row < currentShape.length; row++) {
+                for (let col = 0; col < currentShape[row].length; col++) {
+                    if (currentShape[row][col]) {
+                        board[currentY + row][currentX + col] = 1;
+                    }
+                }
+            }
+        }
+
+        function moveLeft() {
+            currentX--;
+            if (collision()) {
+                currentX++;
+            }
+            draw();
+        }
+
+        function moveRight() {
+            currentX++;
+            if (collision()) {
+                currentX--;
+            }
+            draw();
+        }
+
+        function rotate() {
+            const rotated = currentShape[0].map((_, index) => currentShape.map(row => row[index]).reverse());
+            const prevShape = currentShape;
+            currentShape = rotated;
+            if (collision()) {
+                currentShape = prevShape;
+            }
+            draw();
+        }
+
+        document.addEventListener('keydown', (e) => {
+            switch (e.key) {
+                case 'ArrowLeft':
+                    moveLeft();
+                    break;
+                case 'ArrowRight':
+                    moveRight();
+                    break;
+                case 'ArrowDown':
+                    moveDown();
+                    break;
+                case 'ArrowUp':
+                    rotate();
+                    break;
+            }
+        });
+
+        newShape();
+        draw();
+        setInterval(moveDown, 1000);
+    </script>
+</body>
+</html>
