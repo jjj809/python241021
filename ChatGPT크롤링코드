@@ -1,0 +1,36 @@
+import requests
+from bs4 import BeautifulSoup
+import openpyxl
+
+# URL of the Naver search page for "반도체"
+url = "https://search.naver.com/search.naver?where=nexearch&sm=top_hty&fbm=0&ie=utf8&query=%EB%B0%98%EB%8F%84%EC%B2%B4"
+
+# Send a request to fetch the webpage
+response = requests.get(url)
+html = response.text
+
+# Parse the HTML content with BeautifulSoup
+soup = BeautifulSoup(html, 'html.parser')
+
+# Find all news article titles
+titles = soup.find_all('a', class_='news_tit')
+
+# Extract the titles
+news_titles = [title.get_text() for title in titles]
+
+# Create a new Excel workbook and select the active worksheet
+workbook = openpyxl.Workbook()
+sheet = workbook.active
+sheet.title = "News Titles"
+
+# Write the headers
+sheet.append(["News Title"])
+
+# Write the news titles to the Excel file
+for title in news_titles:
+    sheet.append([title])
+
+# Save the workbook to a file named "results.xlsx"
+workbook.save("results.xlsx")
+
+print("News titles have been saved to results.xlsx")
